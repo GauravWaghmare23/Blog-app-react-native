@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { db } from "../../firebase.config";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { useCallback, useEffect, useState } from "react";
+import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { db } from "../../firebase.config";
 
 export default function UserProfile() {
     const { id } = useLocalSearchParams(); // userId from route
@@ -12,7 +12,7 @@ export default function UserProfile() {
     const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
 
-    const fetchUserAndPosts = async () => {
+    const fetchUserAndPosts = useCallback(async () => {
         try {
             const userRef = doc(db, "users", id);
             const userSnap = await getDoc(userRef);
@@ -30,11 +30,11 @@ export default function UserProfile() {
         } catch (error) {
             alert("Error loading profile: " + error.message);
         }
-    };
+    }, [id]);
 
     useEffect(() => {
         fetchUserAndPosts();
-    }, [id]);
+    }, [fetchUserAndPosts]);
 
     const onRefresh = async () => {
         setRefreshing(true);

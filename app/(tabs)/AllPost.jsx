@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl } from "react-native";
-import { collection, query, orderBy, getDocs } from "firebase/firestore";
-import { db, auth } from "../../firebase.config";
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from "expo-router";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { FlatList, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { db } from "../../firebase.config";
 
 export default function AllPost() {
     const [posts, setPosts] = useState([]);
     const [refreshing, setRefreshing] = useState(false);
+    const [likedPosts, setLikedPosts] = useState(new Set());
     const router = useRouter();
 
     const fetchPosts = async () => {
@@ -32,6 +33,18 @@ export default function AllPost() {
         setRefreshing(true);
         await fetchPosts();
         setRefreshing(false);
+    };
+
+    const toggleLike = (postId) => {
+        setLikedPosts(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(postId)) {
+                newSet.delete(postId);
+            } else {
+                newSet.add(postId);
+            }
+            return newSet;
+        });
     };
 
     const renderPost = ({ item }) => (
@@ -73,14 +86,28 @@ export default function AllPost() {
             </View>
 
             <View style={styles.postActions}>
-                <TouchableOpacity style={styles.actionButton}>
-                    <Ionicons name="heart-outline" size={24} color="#666" />
-                    <Text style={styles.actionText}>Like</Text>
+                <TouchableOpacity
+                    style={styles.actionButton}
+                    onPress={() => toggleLike(item.id)}
+                >
+                    <Ionicons
+                        name={likedPosts.has(item.id) ? "heart" : "heart-outline"}
+                        size={24}
+                        color={likedPosts.has(item.id) ? "#E91E63" : "#666"}
+                    />
+                    <Text style={[styles.actionText, likedPosts.has(item.id) && styles.likedText]}>
+                        {likedPosts.has(item.id) ? "Liked" : "Like"}
+                    </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.actionButton}>
                     <Ionicons name="chatbubble-outline" size={22} color="#666" />
                     <Text style={styles.actionText}>Comment</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionButton}>
+                    <Ionicons name="repeat-outline" size={24} color="#666" />
+                    <Text style={styles.actionText}>Repost</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.actionButton}>
@@ -132,17 +159,17 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 3,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        elevation: 5,
     },
     headerTitle: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#1A1A1A',
+        color: '#FFFFFF',
     },
     headerActions: {
         flexDirection: 'row',
@@ -185,7 +212,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 22,
-        backgroundColor: '#0095F6',
+        backgroundColor: `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`,
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -261,5 +288,8 @@ const styles = StyleSheet.create({
         color: '#666',
         fontSize: 14,
         fontWeight: '500',
+    },
+    likedText: {
+        color: '#E91E63',
     },
 });
